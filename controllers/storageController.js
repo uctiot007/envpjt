@@ -38,7 +38,7 @@ export const handleExternalUpload = (req, res) => {
         // Return the path
         res.status(200).json({ 
             success: true, 
-            path: `/${folderId}/${context || 'misc'}/${filename}`
+            path: `/public/${folderId}/${context || 'misc'}/${filename}`
         });
 
     } catch (error) {

@@ -1,0 +1,142 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Promote Game to Collection",
+      "type": "shell",
+      "command": "mongosh",
+      "args": [
+        "envproject",
+        "--eval",
+        "var fitgirlId='${input:fitgirlId}'; var targetList='${input:targetList}';",
+        "${workspaceFolder}\\scripts\\promote.js"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Demote Game from Collection",
+      "type": "shell",
+      "command": "mongosh",
+      "args": [
+        "envproject",
+        "--eval",
+        "var fitgirlId='${input:fitgirlId}'; var targetList='${input:targetList}';",
+        "${workspaceFolder}\\scripts\\demote.js"
+      ],
+      "group": "none",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Promote to devs_recommended",
+      "type": "shell",
+      "command": "mongosh",
+      "args": [
+        "envproject",
+        "--eval",
+        "var fitgirlId='${input:fitgirlId}'; var targetList='devs_recommended';",
+        "${workspaceFolder}\\scripts\\promote.js"
+      ],
+      "group": "none",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Promote to carousel",
+      "type": "shell",
+      "command": "mongosh",
+      "args": [
+        "envproject",
+        "--eval",
+        "var fitgirlId='${input:fitgirlId}'; var targetList='carousel';",
+        "${workspaceFolder}\\scripts\\promote.js"
+      ],
+      "group": "none",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Demote from devs_recommended",
+      "type": "shell",
+      "command": "mongosh",
+      "args": [
+        "envproject",
+        "--eval",
+        "var fitgirlId='${input:fitgirlId}'; var targetList='devs_recommended';",
+        "${workspaceFolder}\\scripts\\demote.js"
+      ],
+      "group": "none",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Demote from carousel",
+      "type": "shell",
+      "command": "mongosh",
+      "args": [
+        "envproject",
+        "--eval",
+        "var fitgirlId='${input:fitgirlId}'; var targetList='carousel';",
+        "${workspaceFolder}\\scripts\\demote.js"
+      ],
+      "group": "none",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "fitgirlId",
+      "type": "promptString",
+      "description": "FitGirl Repack ID (number shown on fitgirl-repacks.site)"
+    },
+    {
+      "id": "targetList",
+      "type": "pickString",
+      "description": "Target Collection",
+      "options": ["devs_recommended", "carousel"],
+      "default": "devs_recommended"
+    }
+  ]
+}

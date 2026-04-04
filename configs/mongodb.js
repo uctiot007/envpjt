@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 export const connectDB = async () => {
     // 1. Try to get from Env
     // 2. Hardcode the string ONLY if env fails (as a temporary DevOps bypass)
-    const uri = process.env.MONGO_URI || "mongodb://teamuser:teampassword123@172.25.6.30:27017/yourdb?authSource=admin&tls=false";
+    const uri = process.env.MONGO_URI || "mongodb://teamuser:teampassword123@172.25.6.45:27017/yourdb?authSource=admin&tls=false";
 
     console.log('--- DB Debug ---');
     console.log('Using URI:', uri.includes('@') ? uri.split('@')[1] : uri);
