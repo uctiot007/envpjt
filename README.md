@@ -67,13 +67,21 @@ npm install
 Create a `.env` file in the root with the following keys:
 
 ```env
-PORT=3000
-MONGO_URI=mongodb://localhost:27017/envproject
-JWT_SECRET=your_jwt_secret
-MAIL_HOST=smtp.yourprovider.com
-MAIL_PORT=587
-MAIL_USER=your@email.com
-MAIL_PASS=yourpassword
+PORT=5000
+MONGO_URI=mongodb://teamuser:teampassword123@172.25.7.84:27017/
+JWT_SECRET=your_super_secret_key
+NODE_ENV=development
+STORAGE_SERVER_SECRET=secure_lan_key_123
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+# Nodemailer
+GMAIL=email id
+PASS=16 letter code
+CLIENT_URL=http://localhost:5173
 ```
 
 > ⚠️ Never commit `.env` to version control.

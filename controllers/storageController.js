@@ -9,12 +9,12 @@ export const handleExternalUpload = (req, res) => {
         }
 
         const { base64Image, folderId, context } = req.body;
-        
+
         if (!base64Image || !folderId) {
             return res.status(400).json({ message: "Missing required payload parameters" });
         }
 
-        const matches = base64Image.match(/^data:image\/(\w+);base64,(.+)$/);
+        const matches = base64Image.match(/^data:([^;]+);base64,(.+)$/);
         if (!matches) {
             return res.status(400).json({ message: "Invalid image format" });
         }
@@ -28,16 +28,16 @@ export const handleExternalUpload = (req, res) => {
             fs.mkdirSync(userFolder, { recursive: true });
         }
 
-        const filename = context === 'profile' 
-            ? `profile.${ext}` 
+        const filename = context === 'profile'
+            ? `profile.${ext}`
             : `img_${Date.now()}.${ext}`;
 
         const filePath = path.join(userFolder, filename);
         fs.writeFileSync(filePath, base64Data, 'base64');
 
         // Return the path
-        res.status(200).json({ 
-            success: true, 
+        res.status(200).json({
+            success: true,
             path: `/public/${folderId}/${context || 'misc'}/${filename}`
         });
 
