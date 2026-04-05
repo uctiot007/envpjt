@@ -19,7 +19,7 @@ export const handleExternalUpload = (req, res) => {
             return res.status(400).json({ message: "Invalid image format" });
         }
 
-        const ext = matches[1];
+        const ext = matches[1].split('/').pop();
         const base64Data = matches[2];
 
         // Folder logic: public/userId/context
