@@ -66,8 +66,7 @@ export const handleExternalUpload = (req, res) => {
 
         // 3. SYNC FIX: Priority to the filename sent by the backend
 
-        const filename = incomingFilename || (context === 'profile' ? profile.${ ext }: `img_${Date.now()
-    }.${ ext } `);
+        const filename = incomingFilename || (context === 'profile' ? `profile.${ext}` : `img_${Date.now()}.${ext}`);
 
         const filePath = path.join(userFolder, filename);
 
@@ -83,7 +82,7 @@ export const handleExternalUpload = (req, res) => {
 
             success: true,
 
-            path: /public/${folderId}/${context || 'misc'}/${filename}
+            path: `/public/${folderId}/${context || 'misc'}/${filename}`
 
         });
 
