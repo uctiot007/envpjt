@@ -42,11 +42,22 @@ app.get('/', (req, res) => {
     });
 });
 
+// --- Health Check Route ---
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: "UP",
+        message: "Server is running healthy ✅",
+        uptime: `${Math.floor(process.uptime())}s`,
+        environment: process.env.NODE_ENV || "development",
+        timestamp: new Date().toISOString()
+    });
+});
+
 // --- Middleware ---
 app.use(cookieParser());
 app.use(cors({
-  origin: true,
-  credentials: true
+    origin: true,
+    credentials: true
 }));
 
 // Use 50mb limit for image handling
@@ -66,10 +77,10 @@ app.use('/api/storage', storageRouter);
 
 // --- Production Handling ---
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
-  app.get(/(.*)/, (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
-  });
+    app.use(express.static(path.join(__dirname, "../frontend/dist")));
+    app.get(/(.*)/, (req, res) => {
+        res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+    });
 }
 
 const PORT = process.env.PORT || 5001;
