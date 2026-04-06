@@ -11,7 +11,7 @@ const envPath = path.join(__dirname, '.env');
 
 // 2. Environment Configuration (ONLY ONCE)
 if (fs.existsSync(envPath)) {
-    dotenv.config({ path: envPath });
+    dotenv.config({ path: envPath, override: true });
     console.log("✅ .env file found at:", envPath);
 } else {
     console.error("❌ .env file NOT found at:", envPath);

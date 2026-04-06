@@ -77,13 +77,19 @@ async function runBootSequence() {
         try {
             const logUri = buildUriForDb(localUri, 'Server');
             const conn = await mongoose.createConnection(logUri, { serverSelectionTimeoutMS: 5000 }).asPromise();
-            await conn.db.collection('IPinfo').insertOne({
-                event: "Laptop Started",
-                ipv4: currentIP,
-                timestamp: new Date(),
-                machine: os.hostname()
-            });
-            console.log("✅ IP logged successfully to database.");
+            await conn.db.collection('IPinfo').updateOne(
+                { machine: os.hostname() },
+                { 
+                    $set: {
+                        event: "Latest Boot Status",
+                        ipv4: currentIP,
+                        timestamp: new Date(),
+                        machine: os.hostname()
+                    }
+                },
+                { upsert: true }
+            );
+            console.log("✅ Latest IP status updated in database.");
             await conn.close();
         } catch (err) {
             console.error("⚠️ Failed to log IP to database (Offline?):", err.message);
