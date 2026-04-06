@@ -1,4 +1,4 @@
-const validCollections = ["devs_recommended", "carousel"];
+const validCollections = ["Devs Recommended", "Featured Carousel"];
 
 if (!targetList || !validCollections.includes(targetList)) {
   print(`ERROR: targetList must be one of: ${validCollections.join(", ")}`);
@@ -10,17 +10,25 @@ if (!fitgirlId) {
   quit(1);
 }
 
-const doc = db.all_games.findOne({ fitgirl_id: parseInt(fitgirlId) });
+// 1. Find the game in fitgirl-games
+const game = db['fitgirl-games'].findOne({ fitgirl_id: String(fitgirlId) });
 
-if (!doc) {
-  print(`ERROR: No document found in 'all_games' with fitgirl_id: ${fitgirlId}`);
+if (!game) {
+  print(`ERROR: No game found in 'fitgirl-games' with fitgirl_id: ${fitgirlId}`);
   quit(1);
 }
 
-const result = db[targetList].deleteOne({ _id: doc._id });
+// 2. Remove the _id from the appropriate section array
+const result = db['store-layouts'].updateOne(
+  { name: 'LatestPage', "sections.title": targetList },
+  { 
+    $pull: { "sections.$.games": game._id },
+    $set: { updatedAt: new Date() } 
+  }
+);
 
-if (result.deletedCount === 1) {
-  print(`SUCCESS: '${doc.title}' removed from '${targetList}' (all_games untouched)`);
+if (result.modifiedCount === 1) {
+  print(`SUCCESS: '${game.gameName || game.title}' removed from '${targetList}'`);
 } else {
-  print(`INFO: '${doc.title}' was not present in '${targetList}' — nothing deleted`);
+  print(`INFO: '${game.gameName || game.title}' was not in '${targetList}'`);
 }

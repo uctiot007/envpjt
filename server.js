@@ -25,6 +25,7 @@ import cors from 'cors';
 // 4. Internal Imports
 import { connectDB } from './configs/mongodb.js';
 import { app, server } from "./lib/socket.js";
+import { backupDbs } from './scripts/backup.js';
 import authRouter from './routes/authApi.js';
 import messageRouter from './routes/messageApi.js';
 import libraryRouter from './routes/libraryApi.js';
@@ -89,6 +90,16 @@ const PORT = process.env.PORT || 5001;
 connectDB().then(() => {
     server.listen(PORT, () => {
         console.log(`🚀 Server running at http://localhost:${PORT}`);
+        
+        // Start Periodic Backups using interval from .env
+        const backupIntervalHours = parseFloat(process.env.BACKUP_INTERVAL_HOURS) || 6;
+        const backupIntervalMs = backupIntervalHours * 60 * 60 * 1000;
+        
+        console.log(`⏰ Scheduled periodic backups every ${backupIntervalHours} hours.`);
+        setInterval(() => {
+            console.log("⏰ Running scheduled periodic backup...");
+            backupDbs().catch(err => console.error("Periodic Backup Error:", err));
+        }, backupIntervalMs);
     });
 }).catch(err => {
     console.error("❌ Critical Failure: Could not start server", err);

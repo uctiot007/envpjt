@@ -6,11 +6,20 @@
       "type": "shell",
       "command": "mongosh",
       "args": [
-        "envproject",
+        "mongodb://teamuser:teampassword123@172.25.5.110:27017/gamesDB?authSource=admin",
         "--eval",
         "var fitgirlId='${input:fitgirlId}'; var targetList='${input:targetList}';",
         "${workspaceFolder}\\scripts\\promote.js"
       ],
+      "options": {
+        "shell": {
+          "executable": "cmd",
+          "args": [
+            "/d",
+            "/c"
+          ]
+        }
+      },
       "group": {
         "kind": "build",
         "isDefault": true
@@ -29,11 +38,20 @@
       "type": "shell",
       "command": "mongosh",
       "args": [
-        "envproject",
+        "mongodb://teamuser:teampassword123@172.25.5.110:27017/gamesDB?authSource=admin",
         "--eval",
         "var fitgirlId='${input:fitgirlId}'; var targetList='${input:targetList}';",
         "${workspaceFolder}\\scripts\\demote.js"
       ],
+      "options": {
+        "shell": {
+          "executable": "cmd",
+          "args": [
+            "/d",
+            "/c"
+          ]
+        }
+      },
       "group": "none",
       "presentation": {
         "echo": true,
@@ -45,15 +63,24 @@
       "problemMatcher": []
     },
     {
-      "label": "Promote to devs_recommended",
+      "label": "Promote to Devs Recommended",
       "type": "shell",
       "command": "mongosh",
       "args": [
-        "envproject",
+        "mongodb://teamuser:teampassword123@172.25.5.110:27017/gamesDB?authSource=admin",
         "--eval",
-        "var fitgirlId='${input:fitgirlId}'; var targetList='devs_recommended';",
+        "var fitgirlId='${input:fitgirlId}'; var targetList='Devs Recommended';",
         "${workspaceFolder}\\scripts\\promote.js"
       ],
+      "options": {
+        "shell": {
+          "executable": "cmd",
+          "args": [
+            "/d",
+            "/c"
+          ]
+        }
+      },
       "group": "none",
       "presentation": {
         "echo": true,
@@ -65,15 +92,24 @@
       "problemMatcher": []
     },
     {
-      "label": "Promote to carousel",
+      "label": "Promote to Featured Carousel",
       "type": "shell",
       "command": "mongosh",
       "args": [
-        "envproject",
+        "mongodb://teamuser:teampassword123@172.25.5.110:27017/gamesDB?authSource=admin",
         "--eval",
-        "var fitgirlId='${input:fitgirlId}'; var targetList='carousel';",
+        "var fitgirlId='${input:fitgirlId}'; var targetList='Featured Carousel';",
         "${workspaceFolder}\\scripts\\promote.js"
       ],
+      "options": {
+        "shell": {
+          "executable": "cmd",
+          "args": [
+            "/d",
+            "/c"
+          ]
+        }
+      },
       "group": "none",
       "presentation": {
         "echo": true,
@@ -85,15 +121,24 @@
       "problemMatcher": []
     },
     {
-      "label": "Demote from devs_recommended",
+      "label": "Demote from Devs Recommended",
       "type": "shell",
       "command": "mongosh",
       "args": [
-        "envproject",
+        "mongodb://teamuser:teampassword123@172.25.5.110:27017/gamesDB?authSource=admin",
         "--eval",
-        "var fitgirlId='${input:fitgirlId}'; var targetList='devs_recommended';",
+        "var fitgirlId='${input:fitgirlId}'; var targetList='Devs Recommended';",
         "${workspaceFolder}\\scripts\\demote.js"
       ],
+      "options": {
+        "shell": {
+          "executable": "cmd",
+          "args": [
+            "/d",
+            "/c"
+          ]
+        }
+      },
       "group": "none",
       "presentation": {
         "echo": true,
@@ -105,15 +150,82 @@
       "problemMatcher": []
     },
     {
-      "label": "Demote from carousel",
+      "label": "Demote from Featured Carousel",
       "type": "shell",
       "command": "mongosh",
       "args": [
-        "envproject",
+        "mongodb://teamuser:teampassword123@172.25.5.110:27017/gamesDB?authSource=admin",
         "--eval",
-        "var fitgirlId='${input:fitgirlId}'; var targetList='carousel';",
+        "var fitgirlId='${input:fitgirlId}'; var targetList='Featured Carousel';",
         "${workspaceFolder}\\scripts\\demote.js"
       ],
+      "options": {
+        "shell": {
+          "executable": "cmd",
+          "args": [
+            "/d",
+            "/c"
+          ]
+        }
+      },
+      "group": "none",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Clear Featured Carousel list",
+      "type": "shell",
+      "command": "mongosh",
+      "args": [
+        "mongodb://teamuser:teampassword123@172.25.5.110:27017/gamesDB?authSource=admin",
+        "--eval",
+        "var targetList='Featured Carousel';",
+        "${workspaceFolder}\\scripts\\clear-list.js"
+      ],
+      "options": {
+        "shell": {
+          "executable": "cmd",
+          "args": [
+            "/d",
+            "/c"
+          ]
+        }
+      },
+      "group": "none",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "clear": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Clear Devs Recommended list",
+      "type": "shell",
+      "command": "mongosh",
+      "args": [
+        "mongodb://teamuser:teampassword123@172.25.5.110:27017/gamesDB?authSource=admin",
+        "--eval",
+        "var targetList='Devs Recommended';",
+        "${workspaceFolder}\\scripts\\clear-list.js"
+      ],
+      "options": {
+        "shell": {
+          "executable": "cmd",
+          "args": [
+            "/d",
+            "/c"
+          ]
+        }
+      },
       "group": "none",
       "presentation": {
         "echo": true,
@@ -135,8 +247,11 @@
       "id": "targetList",
       "type": "pickString",
       "description": "Target Collection",
-      "options": ["devs_recommended", "carousel"],
-      "default": "devs_recommended"
+      "options": [
+        "Devs Recommended",
+        "Featured Carousel"
+      ],
+      "default": "Devs Recommended"
     }
   ]
 }

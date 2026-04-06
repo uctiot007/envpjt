@@ -1,0 +1,50 @@
+[
+  {
+    "key": "ctrl+shift+b",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Promote Game to Collection",
+    "when": "!inDebugMode"
+  },
+  {
+    "key": "ctrl+shift+d",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Demote Game from Collection",
+    "when": "!inDebugMode"
+  },
+  {
+    "key": "ctrl+shift+1",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Promote to Devs Recommended",
+    "when": "!inDebugMode"
+  },
+  {
+    "key": "ctrl+shift+2",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Promote to Featured Carousel",
+    "when": "!inDebugMode"
+  },
+  {
+    "key": "ctrl+shift+3",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Demote from Devs Recommended",
+    "when": "!inDebugMode"
+  },
+  {
+    "key": "ctrl+shift+4",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Demote from Featured Carousel",
+    "when": "!inDebugMode"
+  },
+  {
+    "key": "ctrl+shift+5",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Clear Featured Carousel list",
+    "when": "!inDebugMode"
+  },
+  {
+    "key": "ctrl+shift+6",
+    "command": "workbench.action.tasks.runTask",
+    "args": "Clear Devs Recommended list",
+    "when": "!inDebugMode"
+  }
+]

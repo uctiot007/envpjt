@@ -1,21 +1,9 @@
-# Dependencies
 node_modules/
-
-# Environment variables
 .env
-.env.local
-.env.*.local
-
-# MongoDB
+backups/
 *.log
-mongosh_log*
-
-# OS
+sync_test_log.txt
+sync_content_test_log.txt
+backup_log.txt
+sync_log.txt
 .DS_Store
-Thumbs.db
-desktop.ini
-
-# VS Code (keep tasks.json and keybindings is user-level so not tracked)
-.vscode/*
-!.vscode/tasks.json
-!.vscode/extensions.json
