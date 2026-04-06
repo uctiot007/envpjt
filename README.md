@@ -1,212 +1,185 @@
-# envpjt# envproject
+# envpjt — Node.js REST API Backend
 
-A Node.js REST API backend built with Express.js using MVC architecture, with MongoDB as the database. Includes a VS Code-integrated game promotion system for managing UI-specific collections.
+A modular, production-ready REST API backend built with **Express.js** and **MongoDB (Mongoose)**. The project follows the MVC (Model-View-Controller) pattern and ships with JWT authentication, email notifications, real-time support via Socket.IO, cloud media uploads through Cloudinary, and handy database maintenance scripts.
 
 ---
 
 ## Table of Contents
 
+- [Features](#features)
+- [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Environment Variables](#environment-variables)
-- [Running the Server](#running-the-server)
-- [Game Promotion System](#game-promotion-system)
-- [VS Code Keybinds](#vs-code-keybinds)
+- [Available Scripts](#available-scripts)
+- [API Overview](#api-overview)
 - [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Features
+
+- RESTful API with modular routing and controllers
+- JWT-based authentication and authorization middleware
+- Password hashing with bcryptjs
+- Email notifications via Nodemailer
+- Real-time events with Socket.IO
+- Cloud image/file uploads via Cloudinary
+- MongoDB integration with Mongoose ODM
+- Database sync, backup, and boot scripts for easy maintenance
+- Environment-based configuration with dotenv
+- Cookie parsing and CORS support
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Runtime | Node.js (ESM modules) |
+| Framework | Express.js 4 |
+| Database | MongoDB via Mongoose 8 |
+| Auth | JSON Web Tokens (jsonwebtoken) + bcryptjs |
+| Real-time | Socket.IO 4 |
+| Media Storage | Cloudinary 2 |
+| Email | Nodemailer 6 |
+| Dev tooling | Nodemon |
 
 ---
 
 ## Project Structure
 
 ```
-envproject/
-├── .vscode/
-│   └── tasks.json          # VS Code task definitions (promote/demote)
-├── configs/                # App and database configuration
-├── controllers/            # Route handler logic
-├── lib/                    # Reusable helper modules
-├── mail-service/           # Email notification setup (Nodemailer)
-├── middleware/             # Auth, validation, error handling
-├── models/                 # Mongoose schemas and models
-├── public/                 # Static assets
-├── routes/                 # Express route definitions
+envpjt/
+├── configs/          # Database and app-level configuration
+├── controllers/      # Business logic — one file per resource
+├── lib/              # Reusable internal library modules
+├── mail-service/     # Nodemailer setup and email templates
+├── middleware/       # Auth checks, error handling, request validation
+├── models/           # Mongoose schemas and models
+├── public/           # Publicly served static assets
+├── routes/           # Express route definitions (maps URLs to controllers)
 ├── scripts/
-│   ├── promote.js          # Promotes a game to a UI collection
-│   └── demote.js           # Removes a game from a UI collection
-├── utils/                  # General utility functions
-├── .env                    # Environment variables (do NOT commit)
-├── .gitignore
-├── server.js               # App entry point
-└── package.json
+│   ├── boot-sync.js  # Runs before dev server starts
+│   ├── sync-db.js    # Syncs database state
+│   └── backup.js     # Database backup utility
+├── utils/            # Shared helper/utility functions
+├── .env              # Environment variables (do NOT commit)
+├── server.js         # Application entry point
+├── package.json
+└── package-lock.json
 ```
 
 ---
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) v16+
-- [mongosh](https://www.mongodb.com/try/download/shell) installed and in PATH
-- MongoDB running locally with the `envproject` database
-- VS Code (for the promotion system keybinds)
+- **Node.js** v18 or higher
+- **npm** v9 or higher
+- A running **MongoDB** instance (local or [MongoDB Atlas](https://www.mongodb.com/atlas))
+- A **Cloudinary** account (for media uploads)
+- An **SMTP** provider or service (for email — Gmail, SendGrid, etc.)
 
 ---
 
 ## Installation
 
-```bash
-git clone https://github.com/uctiot007/envpjt.git
-cd envpjt
-npm install
-```
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/uctiot007/envpjt.git
+   cd envpjt
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+
+   Create a `.env` file in the root directory (see [Environment Variables](#environment-variables) below).
 
 ---
 
 ## Environment Variables
 
-Create a `.env` file in the root with the following keys:
+Create a `.env` file at the project root. Below are the variables the app expects:
 
 ```env
-PORT=5000
-MONGO_URI=mongodb://teamuser:teampassword123@172.25.7.84:27017/
-JWT_SECRET=your_super_secret_key
-NODE_ENV=development
-STORAGE_SERVER_SECRET=secure_lan_key_123
+# Server
+PORT=3000
+
+# MongoDB
+MONGO_URI=mongodb://localhost:27017/your-database-name
+
+# JWT
+JWT_SECRET=your_jwt_secret_key
+JWT_EXPIRES_IN=7d
+
+# Cookie
+COOKIE_SECRET=your_cookie_secret
 
 # Cloudinary
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
-# Nodemailer
-GMAIL=email id
-PASS=16 letter code
-CLIENT_URL=http://localhost:5173
+# Mail (Nodemailer)
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_USER=your@email.com
+MAIL_PASS=your_email_password
+MAIL_FROM=no-reply@yourdomain.com
 ```
 
-> ⚠️ Never commit `.env` to version control.
+> **Important:** Never commit `.env` to version control. It is already listed in `.gitignore`.
 
 ---
 
-## Running the Server
+## Available Scripts
 
-**Development:**
-```bash
-npm run dev
-```
-
-**Production:**
-```bash
-npm start
-```
-
-Server runs on the port defined in `.env` (default: `3000`).
+| Script | Command | Description |
+|---|---|---|
+| Start (production) | `npm start` | Runs `node server.js` |
+| Start (development) | `npm run dev` | Runs boot sync then starts server with nodemon |
+| Boot sync | `npm run boot` | Executes `scripts/boot-sync.js` (pre-start tasks) |
+| Database sync | `npm run sync` | Executes `scripts/sync-db.js` |
+| Database backup | `npm run backup` | Executes `scripts/backup.js` |
 
 ---
 
-## Game Promotion System
+## API Overview
 
-A `mongosh`-based automation system to promote or demote games between the master `all_games` collection and UI-specific collections (`devs_recommended`, `carousel`).
+All routes are defined in the `routes/` directory and handled by controllers in `controllers/`. A typical resource follows this pattern:
 
-Games are looked up by their **FitGirl Repack ID** (`fitgirl_id` field in `all_games`). The master `all_games` collection is **never modified** — scripts only read from it.
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/<resource>` | List all records |
+| `GET` | `/api/<resource>/:id` | Get a single record |
+| `POST` | `/api/<resource>` | Create a new record |
+| `PUT` | `/api/<resource>/:id` | Update an existing record |
+| `DELETE` | `/api/<resource>/:id` | Delete a record |
 
-### Collections
-
-| Collection | Purpose |
-|---|---|
-| `all_games` | Master database — source of truth, never written to by scripts |
-| `devs_recommended` | Games shown in the dev picks UI section |
-| `carousel` | Games shown in the homepage carousel |
-
-### How to Use
-
-Trigger via VS Code keybinds (see below) or manually:
-
-```bash
-# Promote
-mongosh envproject --eval "var fitgirlId='123'; var targetList='carousel';" scripts/promote.js
-
-# Demote
-mongosh envproject --eval "var fitgirlId='123'; var targetList='carousel';" scripts/demote.js
-```
-
-### Document Requirements
-
-Each document in `all_games` must have a `fitgirl_id` field (stored as a number):
-
-```json
-{
-  "_id": "ObjectId(...)",
-  "fitgirl_id": 123,
-  "title": "Game Title",
-  ...
-}
-```
-
----
-
-## VS Code Keybinds
-
-Add these to your user `keybindings.json` (`Ctrl+Shift+P` → `Preferences: Open Keyboard Shortcuts (JSON)`):
-
-| Keybind | Action |
-|---|---|
-| `Ctrl+Shift+B` | Promote → pick collection via dropdown |
-| `Ctrl+Shift+D` | Demote → pick collection via dropdown |
-| `Ctrl+Shift+1` | Promote directly → `devs_recommended` |
-| `Ctrl+Shift+2` | Promote directly → `carousel` |
-| `Ctrl+Shift+3` | Demote directly from `devs_recommended` |
-| `Ctrl+Shift+4` | Demote directly from `carousel` |
-
-```json
-[
-  {
-    "key": "ctrl+shift+b",
-    "command": "workbench.action.tasks.runTask",
-    "args": "Promote Game to Collection",
-    "when": "!inDebugMode"
-  },
-  {
-    "key": "ctrl+shift+d",
-    "command": "workbench.action.tasks.runTask",
-    "args": "Demote Game from Collection",
-    "when": "!inDebugMode"
-  },
-  {
-    "key": "ctrl+shift+1",
-    "command": "workbench.action.tasks.runTask",
-    "args": "Promote to devs_recommended",
-    "when": "!inDebugMode"
-  },
-  {
-    "key": "ctrl+shift+2",
-    "command": "workbench.action.tasks.runTask",
-    "args": "Promote to carousel",
-    "when": "!inDebugMode"
-  },
-  {
-    "key": "ctrl+shift+3",
-    "command": "workbench.action.tasks.runTask",
-    "args": "Demote from devs_recommended",
-    "when": "!inDebugMode"
-  },
-  {
-    "key": "ctrl+shift+4",
-    "command": "workbench.action.tasks.runTask",
-    "args": "Demote from carousel",
-    "when": "!inDebugMode"
-  }
-]
-```
-
-> `keybindings.json` is user-level and is not tracked by Git. Each teammate must add these manually.
+> Check the individual files inside `routes/` for the full list of available endpoints and any authentication requirements.
 
 ---
 
 ## Contributing
 
-1. Fork the repository
-2. Create a branch: `git checkout -b feature/your-feature`
-3. Commit your changes: `git commit -m "describe change"`
-4. Push: `git push origin feature/your-feature`
+1. Fork this repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit your changes: `git commit -m "feat: describe your change"`
+4. Push to your branch: `git push origin feature/your-feature`
 5. Open a Pull Request
+
+Please keep commits focused and write clear PR descriptions.
+
+---
+
+## License
+
+This project does not currently have a license. Add a `LICENSE` file to define usage and distribution rights.
