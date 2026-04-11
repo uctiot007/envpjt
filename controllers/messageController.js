@@ -80,11 +80,12 @@ export const sendMessage = async (req, res) => {
         let result = null;
 
         if (image) {
-            result = await saveImageDual(image, senderId.toString(), 'message');
+            result = await saveImageMulti(image, senderId.toString(), 'message');
             storageInfo = {
+                azure: result.azureUrl,
                 cloud: result.cloudUrl,
                 local: result.localUrl,
-                synced: result.success
+                status: result.success
             };
         }
 
@@ -92,8 +93,10 @@ export const sendMessage = async (req, res) => {
             senderId, 
             receiverId, 
             text, 
-            image: result?.cloudUrl || result?.localUrl, 
-            imageLocal: result?.localUrl
+            image: result?.azureUrl || result?.cloudUrl || result?.localUrl, 
+            imageLocal: result?.localUrl,
+            imageCloud: result?.cloudUrl,
+            imageAzure: result?.azureUrl
         });
         await newMessage.save();
 

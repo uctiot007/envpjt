@@ -26,6 +26,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: "",
     },
+    profilePicCloud: {
+        type: String,
+        default: "",
+    },
+    profilePicAzure: {
+        type: String,
+        default: "",
+    },
     lastLogin: {
         type: Date,
         default: Date.now

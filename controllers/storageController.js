@@ -1,4 +1,5 @@
 import cloudinary from '../configs/cloudinary.js';
+import { containerClient } from '../configs/azureStorage.js';
 import path from 'path';
 
 export const handleExternalUpload = async (req, res) => {
@@ -82,5 +83,31 @@ export const proxyCloudinaryImage = async (req, res) => {
     } catch (error) {
         console.error("❌ PROXY ERROR:", error);
         res.status(500).json({ message: "Error bridging image request" });
+    }
+};
+
+/**
+ * Proxy/Bridge for viewing Azure images.
+ */
+export const proxyAzureImage = async (req, res) => {
+    try {
+        const { blobName } = req.query; // blobName: "userId/context/filename.ext"
+
+        if (!blobName) {
+            return res.status(400).json({ message: "Missing blobName parameter" });
+        }
+
+        console.log(`🌐 Proxying request for Azure Blob: ${blobName}`);
+
+        const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+        
+        const downloadResponse = await blockBlobClient.download(0);
+        
+        res.setHeader('Content-Type', downloadResponse.contentType);
+        downloadResponse.readableStreamBody.pipe(res);
+
+    } catch (error) {
+        console.error("❌ AZURE PROXY ERROR:", error);
+        res.status(500).json({ message: "Error bridging Azure image request" });
     }
 };

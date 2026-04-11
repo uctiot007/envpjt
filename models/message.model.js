@@ -21,6 +21,12 @@ const messageSchema = new mongoose.Schema(
     imageLocal: {
       type: String,
     },
+    imageCloud: {
+      type: String,
+    },
+    imageAzure: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

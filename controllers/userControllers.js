@@ -269,15 +269,19 @@ export const updateProfile = async (req, res) => {
             return res.status(400).json({ message: "Profile picture is required" });
         }
 
-        // Use Dual Storage
-        const result = await saveImageDual(profilePic, userId.toString(), 'profile');
+        // Use Triple Storage (Local + Cloudinary + Azure)
+        const result = await saveImageMulti(profilePic, userId.toString(), 'profile');
         
-        // Save both URLs to the database
+        // Prioritize Azure > Cloudinary > Local for the main profilePic field
+        const primaryUrl = result.azureUrl || result.cloudUrl || result.localUrl;
+
         const updatedUser = await User.findByIdAndUpdate(
             userId, 
             { 
-                profilePic: result.cloudUrl || result.localUrl, // Fallback to local if cloud fails
-                profilePicLocal: result.localUrl 
+                profilePic: primaryUrl,
+                profilePicLocal: result.localUrl,
+                profilePicCloud: result.cloudUrl,
+                profilePicAzure: result.azureUrl
             }, 
             { new: true }
         ).select("-password");
@@ -286,9 +290,10 @@ export const updateProfile = async (req, res) => {
             success: true,
             user: updatedUser,
             storage: {
+                azure: result.azureUrl,
                 cloud: result.cloudUrl,
                 local: result.localUrl,
-                synced: result.success
+                status: result.success
             }
         });
 

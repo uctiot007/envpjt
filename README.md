@@ -10,13 +10,13 @@ A modular, production-ready REST API backend built with **Express.js** and **Mon
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Smart Boot Sequence](#smart-boot-sequence)
-- [Dual Storage System](#dual-storage-system)
-- [Cloudinary Proxy Bridge](#cloudinary-proxy-bridge)
+- [Triple Storage System](#triple-storage-system)
+- [Cloudinary & Azure Proxy Bridges](#cloudinary--azure-proxy-bridges)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Environment Variables](#environment-variables)
 - [Available Scripts](#available-scripts)
-- [Backend Implementation Guide (Cloudinary API)](#backend-implementation-guide-cloudinary-api)
+- [Backend Implementation Guide (Cloudinary & Azure)](#backend-implementation-guide-cloudinary--azure)
 - [API Overview](#api-overview)
 - [Contributing](#contributing)
 
@@ -42,7 +42,7 @@ A modular, production-ready REST API backend built with **Express.js** and **Mon
 | Runtime | Node.js (ESM modules) |
 | Framework | Express.js 4 |
 | Database | MongoDB + Mongoose |
-| Image Storage | Cloudinary 2 + Local Storage |
+| Image Storage | Cloudinary 2 + Azure Blob + Local Storage |
 | Real-time | Socket.IO 4 |
 | Auth | JWT + bcryptjs |
 | Dev tooling | Nodemon (configured to ignore boot meta-changes) |
@@ -80,20 +80,23 @@ When you run `npm run dev` or `npm start`, the server executes a **Smart Boot Se
 
 ---
 
-## Dual Storage System
+## Triple Storage System
 
-The application implements a "Dual Storage" strategy for all media. Use the `saveImageDual` utility in your controllers to:
+The application implements a "Triple Storage" strategy for all media. Use the `saveImageMulti` utility in your controllers to:
 - Save a high-resolution copy to the server's local disk.
 - Upload that same image to Cloudinary.
-- **Schema**: Models now include `profilePicLocal` and `imageLocal` fields to ensure every cloud asset has a local pointer for fallback.
+- Upload that same image to **Azure Blob Storage**.
+- **Schema**: Models now include `profilePicLocal`, `profilePicCloud`, and `profilePicAzure` fields.
+- **Priority**: Azure is the primary storage provider. The `profilePic` and `image` fields will favor Azure URLs if available.
 
 ---
 
-## Cloudinary Proxy Bridge
+## Cloudinary & Azure Proxy Bridges
 
-If Cloudinary's domain (`res.cloudinary.com`) is blocked (common in restricted networks), use the **Proxy Bridge**:
-- **Endpoint**: `GET /api/storage/view?publicId=...&folderId=...&context=...`
-- **How it works**: Your backend fetches the image from Cloudinary (where it isn't blocked) and streams it directly to the browser.
+If cloud domains are blocked (common in restricted networks), use the **Proxy Bridges**:
+- **Cloudinary Endpoint**: `GET /api/storage/view?publicId=...&folderId=...&context=...`
+- **Azure Endpoint**: `GET /api/storage/azure/view?blobName=...`
+- **How it works**: Your backend fetches the image from the cloud provider and streams it directly to the browser.
 - **Benefit**: Users behind firewalls can see the cloud images via your Render/Production domain.
 
 ---
