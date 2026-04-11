@@ -8,7 +8,8 @@ import { dirname } from 'path';
 
 // Import our existing sync and backup logic
 import { syncDbs } from './sync-db.js';
-import { backupDbs } from './backup.js';
+import { runDoubleBackup } from './backup.js';
+import { syncAssets } from '../utils/asset-sync.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -57,8 +58,8 @@ function updateEnvFile(newIP) {
 }
 
 // 3. Main Boot Sequence
-async function runBootSequence() {
-    console.log("🚀 Initializing Smart Boot Sequence...");
+export async function runBootSequence() {
+    console.log("\n🚀 Initializing Smart Boot Sequence...");
     
     const currentIP = getLocalIP();
     console.log(`📍 Detected LAN IP: ${currentIP}`);
@@ -98,12 +99,18 @@ async function runBootSequence() {
 
     // 5. Trigger Sync and Backup
     await syncDbs();
-    await backupDbs();
+    await runDoubleBackup();
     
-    console.log("\n✨ Smart Boot Sequence Completed!");
+    // 6. Trigger Cloud Asset Sync
+    await syncAssets();
+    
+    console.log("\n✨ Smart Boot Sequence Completed!\n");
 }
 
-runBootSequence().catch(err => {
-    console.error("❌ Boot Error:", err);
-    process.exit(1);
-});
+// Only run automatically if this file is called directly
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+    runBootSequence().catch(err => {
+        console.error("❌ Boot Error:", err);
+        process.exit(1);
+    });
+}

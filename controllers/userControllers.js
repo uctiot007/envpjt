@@ -5,7 +5,7 @@ import { generateTokenAndSetCookie } from '../utils/generateTokenAndSetCookie.js
 import { sendPasswordResetEmail, sendResetSuccessEmail, sendVerificationEmail } from '../mail-service/emails.js';
 import cloudinary from '../configs/cloudinary.js';
 import crypto from "crypto";
-import { saveImageLocally } from './imageController.js';
+import { saveImageLocally, saveImageDual } from './imageController.js';
 import { getReceiverSocketId, io } from "../lib/socket.js";
 
 import fs from 'fs';
@@ -261,22 +261,40 @@ export async function resetPassword(req, res){
 }
 
 export const updateProfile = async (req, res) => {
-    try{
+    try {
         const { profilePic } = req.body;
         const userId = req.user._id;
 
-        if(!profilePic){
-            return res.status(400).json({ message: "Profile picture is required"});
+        if (!profilePic) {
+            return res.status(400).json({ message: "Profile picture is required" });
         }
 
-        const uploadResponse = await cloudinary.uploader.upload(profilePic);
-        const updatedUser = await User.findByIdAndUpdate(userId, {profilePic:uploadResponse.secure_url}, {new:true});
-
-        res.status(200).json(updatedUser)
+        // Use Dual Storage
+        const result = await saveImageDual(profilePic, userId.toString(), 'profile');
         
-    }catch(error){
+        // Save both URLs to the database
+        const updatedUser = await User.findByIdAndUpdate(
+            userId, 
+            { 
+                profilePic: result.cloudUrl || result.localUrl, // Fallback to local if cloud fails
+                profilePicLocal: result.localUrl 
+            }, 
+            { new: true }
+        ).select("-password");
+
+        res.status(200).json({
+            success: true,
+            user: updatedUser,
+            storage: {
+                cloud: result.cloudUrl,
+                local: result.localUrl,
+                synced: result.success
+            }
+        });
+
+    } catch (error) {
         console.log("Error in updateProfile controller: ", error);
-        res.status(500).json("Internal server error");    
+        res.status(500).json({ message: "Internal server error" });
     }
 }
 

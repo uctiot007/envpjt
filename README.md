@@ -1,6 +1,6 @@
 # envpjt — Node.js REST API Backend
 
-A modular, production-ready REST API backend built with **Express.js** and **MongoDB (Mongoose)**. The project follows the MVC (Model-View-Controller) pattern and ships with JWT authentication, email notifications, real-time support via Socket.IO, cloud media uploads through Cloudinary, and handy database maintenance scripts.
+A modular, production-ready REST API backend built with **Express.js** and **MongoDB (Mongoose)**. The project follows the MVC (Model-View-Controller) pattern and ships with JWT authentication, email notifications, real-time support via Socket.IO, dual-layer cloud media storage, and a smart automated boot sequence.
 
 ---
 
@@ -9,28 +9,29 @@ A modular, production-ready REST API backend built with **Express.js** and **Mon
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
+- [Smart Boot Sequence](#smart-boot-sequence)
+- [Dual Storage System](#dual-storage-system)
+- [Cloudinary Proxy Bridge](#cloudinary-proxy-bridge)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Environment Variables](#environment-variables)
 - [Available Scripts](#available-scripts)
+- [Backend Implementation Guide (Cloudinary API)](#backend-implementation-guide-cloudinary-api)
 - [API Overview](#api-overview)
 - [Contributing](#contributing)
-- [License](#license)
 
 ---
 
 ## Features
 
-- RESTful API with modular routing and controllers
-- JWT-based authentication and authorization middleware
-- Password hashing with bcryptjs
-- Email notifications via Nodemailer
-- Real-time events with Socket.IO
-- Cloud image/file uploads via Cloudinary
-- MongoDB integration with Mongoose ODM
-- Database sync, backup, and boot scripts for easy maintenance
-- Environment-based configuration with dotenv
-- Cookie parsing and CORS support
+- **RESTful API**: Modular routing and controllers for clean organization.
+- **Smart Boot Sequence**: Automatically detects LAN IP, syncs MongoDB databases, and mirrors assets to the cloud on every startup.
+- **Dual Storage System**: Saves all media both locally (disk) and to Cloudinary for maximum redundancy.
+- **Cloudinary Proxy Bridge**: Bypasses network restrictions (like college firewalls) by serving cloud images through your own server.
+- **JWT Authentication**: Secure token-based auth with middleware.
+- **Real-time Events**: Integrated Socket.IO for live messaging.
+- **Email Service**: Automated notifications via Nodemailer.
+- **Database Maintenance**: Built-in bidirectional sync and backup scripts.
 
 ---
 
@@ -40,12 +41,11 @@ A modular, production-ready REST API backend built with **Express.js** and **Mon
 |---|---|
 | Runtime | Node.js (ESM modules) |
 | Framework | Express.js 4 |
-| Database | MongoDB via Mongoose 8 |
-| Auth | JSON Web Tokens (jsonwebtoken) + bcryptjs |
+| Database | MongoDB + Mongoose |
+| Image Storage | Cloudinary 2 + Local Storage |
 | Real-time | Socket.IO 4 |
-| Media Storage | Cloudinary 2 |
-| Email | Nodemailer 6 |
-| Dev tooling | Nodemon |
+| Auth | JWT + bcryptjs |
+| Dev tooling | Nodemon (configured to ignore boot meta-changes) |
 
 ---
 
@@ -53,133 +53,142 @@ A modular, production-ready REST API backend built with **Express.js** and **Mon
 
 ```
 envpjt/
-├── configs/          # Database and app-level configuration
-├── controllers/      # Business logic — one file per resource
-├── lib/              # Reusable internal library modules
-├── mail-service/     # Nodemailer setup and email templates
-├── middleware/       # Auth checks, error handling, request validation
-├── models/           # Mongoose schemas and models
-├── public/           # Publicly served static assets
-├── routes/           # Express route definitions (maps URLs to controllers)
+├── configs/          # Database and Cloudinary configuration
+├── controllers/      # Business logic (message, user, storage, etc.)
+├── models/           # Mongoose schemas (Dual storage fields added)
+├── routes/           # Express route definitions
 ├── scripts/
-│   ├── boot-sync.js  # Runs before dev server starts
-│   ├── sync-db.js    # Syncs database state
-│   └── backup.js     # Database backup utility
-├── utils/            # Shared helper/utility functions
-├── .env              # Environment variables (do NOT commit)
-├── server.js         # Application entry point
-├── package.json
-└── package-lock.json
+│   ├── boot-sync.js  # Main startup orchestration logic
+│   ├── sync-db.js    # Multi-database bidirectional sync
+│   └── test-cloud.js # Cloudinary connection diagnostics
+├── utils/            # Shared utilities (Asset sync, Token generation)
+├── server.js         # Entry point (Triggers boot sequence)
+├── .env              # Environment vars
+└── nodemon.json      # Custom settings to prevent boot-loops
 ```
 
 ---
 
-## Prerequisites
+## Smart Boot Sequence
 
-- **Node.js** v18 or higher
-- **npm** v9 or higher
-- A running **MongoDB** instance (local or [MongoDB Atlas](https://www.mongodb.com/atlas))
-- A **Cloudinary** account (for media uploads)
-- An **SMTP** provider or service (for email — Gmail, SendGrid, etc.)
-
----
-
-## Installation
-
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/uctiot007/envpjt.git
-   cd envpjt
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-
-   Create a `.env` file in the root directory (see [Environment Variables](#environment-variables) below).
+When you run `npm run dev` or `npm start`, the server executes a **Smart Boot Sequence** before opening the port:
+1. **LAN IP Detection**: Finds your current IPv4 and updates `.env` (crucial for local MongoDB connections).
+2. **IP Logging**: Logs the machine hostname and new IP to the `Server.IPinfo` database.
+3. **Database Sync**: Performs a bidirectional sync between your Local MongoDB and MongoDB Atlas across multiple namespaces.
+4. **Local Backup**: Creates a point-in-time JSON backup of your local collections.
+5. **Asset Mirroring**: Scans the `public/` directory and ensures all new local files are mirrored to Cloudinary.
 
 ---
 
-## Environment Variables
+## Dual Storage System
 
-Create a `.env` file at the project root. Below are the variables the app expects:
+The application implements a "Dual Storage" strategy for all media. Use the `saveImageDual` utility in your controllers to:
+- Save a high-resolution copy to the server's local disk.
+- Upload that same image to Cloudinary.
+- **Schema**: Models now include `profilePicLocal` and `imageLocal` fields to ensure every cloud asset has a local pointer for fallback.
 
-```env
-# Server
-PORT=3000
+---
 
-# MongoDB
-MONGO_URI=mongodb://localhost:27017/your-database-name
+## Cloudinary Proxy Bridge
 
-# JWT
-JWT_SECRET=your_jwt_secret_key
-JWT_EXPIRES_IN=7d
-
-# Cookie
-COOKIE_SECRET=your_cookie_secret
-
-# Cloudinary
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-# Mail (Nodemailer)
-MAIL_HOST=smtp.example.com
-MAIL_PORT=587
-MAIL_USER=your@email.com
-MAIL_PASS=your_email_password
-MAIL_FROM=no-reply@yourdomain.com
-```
-
-> **Important:** Never commit `.env` to version control. It is already listed in `.gitignore`.
+If Cloudinary's domain (`res.cloudinary.com`) is blocked (common in restricted networks), use the **Proxy Bridge**:
+- **Endpoint**: `GET /api/storage/view?publicId=...&folderId=...&context=...`
+- **How it works**: Your backend fetches the image from Cloudinary (where it isn't blocked) and streams it directly to the browser.
+- **Benefit**: Users behind firewalls can see the cloud images via your Render/Production domain.
 
 ---
 
 ## Available Scripts
 
+The scripts are now simplified. The server handles all maintenance tasks automatically on start.
+
 | Script | Command | Description |
 |---|---|---|
-| Start (production) | `npm start` | Runs `node server.js` |
-| Start (development) | `npm run dev` | Runs boot sync then starts server with nodemon |
-| Boot sync | `npm run boot` | Executes `scripts/boot-sync.js` (pre-start tasks) |
-| Database sync | `npm run sync` | Executes `scripts/sync-db.js` |
-| Database backup | `npm run backup` | Executes `scripts/backup.js` |
+| **Start (Dev)** | `npm run dev` | Unified command: Boot sync + Start server via Nodemon |
+| **Start (Prod)** | `npm start` | Unified command: Boot sync + Start server |
+| **Direct Boot** | `npm run boot` | Manually trigger host-sync and asset-mirroring |
+| **DB Sync** | `npm run sync` | Manually trigger bidirectional database sync |
 
 ---
 
-## API Overview
+## Backend Implementation Guide (Cloudinary API)
 
-All routes are defined in the `routes/` directory and handled by controllers in `controllers/`. A typical resource follows this pattern:
+This section explains how to implement and use the Cloudinary "Proxy and Dual-Save" system for new backend features.
 
-| Method | Path | Description |
-|---|---|---|
-| `GET` | `/api/<resource>` | List all records |
-| `GET` | `/api/<resource>/:id` | Get a single record |
-| `POST` | `/api/<resource>` | Create a new record |
-| `PUT` | `/api/<resource>/:id` | Update an existing record |
-| `DELETE` | `/api/<resource>/:id` | Delete a record |
+### 1. The Dual-Saving Logic
+To implement a "Dual Storage" endpoint, you must handle both local file I/O and the Cloudinary SDK concurrently.
 
-> Check the individual files inside `routes/` for the full list of available endpoints and any authentication requirements.
+```javascript
+// Located in controllers/imageController.js
+export const saveImageDual = async (base64Image, userId, context) => {
+    // 1. Save locally using fs.writeFileSync
+    const localUrl = saveImageLocally(base64Image, userId, context);
+
+    // 2. Upload to Cloudinary using the SDK
+    try {
+        const uploadResponse = await cloudinary.uploader.upload(base64Image, {
+            folder: `crackstore/${userId}/${context}`,
+            public_id: path.parse(localUrl).name,
+            resource_type: 'auto'
+        });
+        return { localUrl, cloudUrl: uploadResponse.secure_url, success: true };
+    } catch (err) {
+        return { localUrl, cloudUrl: null, success: false }; // Local only fallback
+    }
+};
+```
+
+### 2. Implementing the Proxy Bridge
+To allow your backend to act as a bridge for cloud assets, implement a streaming route:
+
+```javascript
+// Located in controllers/storageController.js
+export const proxyCloudinaryImage = async (req, res) => {
+    const { publicId, folderId, context } = req.query;
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+    
+    // Construct the direct Cloudinary URL
+    const imageUrl = `https://res.cloudinary.com/${cloudName}/image/upload/crackstore/${folderId}/${context}/${publicId}`;
+
+    // Fetch the image from the server (Server has unrestricted network access)
+    const response = await fetch(imageUrl);
+    
+    // Stream the image data directly to the client
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    
+    res.setHeader('Content-Type', response.headers.get('content-type'));
+    res.send(buffer);
+};
+```
+
+### 3. Usage in Routes
+Always ensure your startup sequence doesn't loop. If you modify files on boot, configure **Nodemon** with an ignore list:
+```json
+{
+  "ignore": [".env", "backups/*", "*_log.txt", "public/*"]
+}
+```
 
 ---
 
-## Contributing
+## Installation
 
-1. Fork this repository
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Commit your changes: `git commit -m "feat: describe your change"`
-4. Push to your branch: `git push origin feature/your-feature`
-5. Open a Pull Request
+1. **Clone & Install**
+   ```bash
+   npm install
+   ```
 
-Please keep commits focused and write clear PR descriptions.
+2. **Environment Setup**
+   Ensure `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` are correctly set in `.env`.
+
+3. **Run**
+   ```bash
+   npm run dev
+   ```
 
 ---
 
 ## License
 
-This project does not currently have a license. Add a `LICENSE` file to define usage and distribution rights.
+This project is currently private.

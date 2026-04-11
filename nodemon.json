@@ -1,0 +1,11 @@
+{
+  "ignore": [
+    ".env",
+    "backups/*",
+    "*_log.txt",
+    "backup_log.txt",
+    "sync_log.txt",
+    "public/*"
+  ],
+  "ext": "js,mjs,json"
+}

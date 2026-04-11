@@ -1,20 +1,5 @@
-import { v2 as cloudinary } from 'cloudinary';
-import dotenv from 'dotenv';
+import cloudinary from '../configs/cloudinary.js';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-// Load Env
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-dotenv.config({ path: path.join(__dirname, '../.env') });
-
-// Configure Cloudinary
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-});
 
 export const handleExternalUpload = async (req, res) => {
     try {
@@ -54,5 +39,48 @@ export const handleExternalUpload = async (req, res) => {
             message: "Internal server error saving file to cloud", 
             debug: error.message 
         });
+    }
+};
+
+/**
+ * Proxy/Bridge for viewing Cloudinary images.
+ * Bypasses college network restrictions by fetching image on server.
+ */
+export const proxyCloudinaryImage = async (req, res) => {
+    try {
+        const { publicId, folderId, context } = req.query;
+
+        if (!publicId) {
+            return res.status(400).json({ message: "Missing publicId parameter" });
+        }
+
+        // Construct Cloudinary URL
+        const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+        const pathParts = ['crackstore', folderId, context, publicId].filter(Boolean);
+        const imageUrl = `https://res.cloudinary.com/${cloudName}/image/upload/${pathParts.join('/')}`;
+
+        console.log(`🌐 Proxying request for: ${imageUrl}`);
+
+        const response = await fetch(imageUrl);
+
+        if (!response.ok) {
+            return res.status(response.status).json({ message: "Failed to fetch image from cloud" });
+        }
+
+        // Forward headers
+        const contentType = response.headers.get('content-type');
+        if (contentType) res.setHeader('Content-Type', contentType);
+        
+        const cacheControl = response.headers.get('cache-control');
+        if (cacheControl) res.setHeader('Cache-Control', cacheControl);
+
+        // Pipe the body
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        res.send(buffer);
+
+    } catch (error) {
+        console.error("❌ PROXY ERROR:", error);
+        res.status(500).json({ message: "Error bridging image request" });
     }
 };

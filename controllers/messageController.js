@@ -2,7 +2,7 @@ import Message from '../models/message.model.js';
 import User from '../models/User.js'
 import cloudinary from '../configs/cloudinary.js'
 import { getReceiverSocketId, io } from "../lib/socket.js";
-import { saveImageLocally } from './imageController.js';
+import { saveImageLocally, saveImageDual } from './imageController.js';
 
 export const getUsersForSidebar = async (req, res) => {
     try {
@@ -76,20 +76,39 @@ export const sendMessage = async (req, res) => {
         const { id: receiverId } = req.params;
         const senderId = req.user._id;
 
-        let imageUrl;
+        let storageInfo = {};
+        let result = null;
+
         if (image) {
-            imageUrl = saveImageLocally(image, senderId.toString(), 'message');
+            result = await saveImageDual(image, senderId.toString(), 'message');
+            storageInfo = {
+                cloud: result.cloudUrl,
+                local: result.localUrl,
+                synced: result.success
+            };
         }
 
-        const newMessage = new Message({ senderId, receiverId, text, image: imageUrl });
+        const newMessage = new Message({ 
+            senderId, 
+            receiverId, 
+            text, 
+            image: result?.cloudUrl || result?.localUrl, 
+            imageLocal: result?.localUrl
+        });
         await newMessage.save();
 
         const receiverSocketId = getReceiverSocketId(receiverId);
         if (receiverSocketId) {
-            io.to(receiverSocketId).emit("newMessage", newMessage);
+            io.to(receiverSocketId).emit("newMessage", {
+                ...newMessage.toObject(),
+                storage: storageInfo
+            });
         }
 
-        res.status(201).json(newMessage);
+        res.status(201).json({
+            ...newMessage.toObject(),
+            storage: storageInfo
+        });
     } catch (error) {
         console.log("Error in sendMessage controller: ", error);
         res.status(500).json({ message: "Internal server error" });

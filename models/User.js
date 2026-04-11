@@ -22,6 +22,10 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: "",
     },
+    profilePicLocal: {
+        type: String,
+        default: "",
+    },
     lastLogin: {
         type: Date,
         default: Date.now
