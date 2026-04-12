@@ -82,11 +82,10 @@ When you run `npm run dev` or `npm start`, the server executes a **Smart Boot Se
 
 ## Triple Storage System
 
-The application implements a "Triple Storage" strategy for all media. Use the `saveImageMulti` utility in your controllers to:
-- Save a high-resolution copy to the server's local disk.
-- Upload that same image to Cloudinary.
-- Upload that same image to **Azure Blob Storage**.
-- **Schema**: Models now include `profilePicLocal`, `profilePicCloud`, and `profilePicAzure` fields.
+The application uses Azure Blob Storage as the primary image destination. By default, `saveImageMulti` uploads images directly to Azure and does not write them to local disk.
+- Uploads go directly to **Azure Blob Storage**.
+- `Cloudinary` is used optionally as a backup, not as the primary storage path.
+- **Schema**: Models still include `profilePicLocal`, `profilePicCloud`, and `profilePicAzure` fields, but `profilePicLocal` may remain empty when using the Azure-first flow.
 - **Priority**: Azure is the primary storage provider. The `profilePic` and `image` fields will favor Azure URLs if available.
 
 ---
@@ -111,6 +110,7 @@ The scripts are now simplified. The server handles all maintenance tasks automat
 |---|---|---|
 | **Start (Dev)** | `npm run dev` | Runs Azure connectivity test, then starts the server with Nodemon |
 | **Start (Prod)** | `npm start` | Runs Azure connectivity test, then starts the server |
+| **Cloudinary → Azure** | `npm run migrate:cloudinary-to-azure` | Migrate all Cloudinary assets into Azure Blob Storage |
 | **Direct Boot** | `npm run boot` | Manually trigger host-sync and asset-mirroring |
 | **DB Sync** | `npm run sync` | Manually trigger bidirectional database sync |
 
@@ -211,7 +211,13 @@ For backend developers who need Azure as the primary image database, wire the Az
      - `profilePicCloud`
      - `profilePicAzure`
 
-### 5. Verification checklist for backend integration
+### 6. Migrating existing Cloudinary assets to Azure
+- Use `npm run migrate:cloudinary-to-azure`.
+- The script lists all Cloudinary uploaded resources (`image`, `raw`, `video`) and uploads them into Azure Blob Storage.
+- Azure blob paths are written under the `cloudinary/` prefix to preserve Cloudinary public IDs.
+- Existing Cloudinary URLs in the database are not automatically rewritten; this script only migrates the files themselves.
+
+### 7. Verification checklist for backend integration
 - `node .\scripts\test-azure.js` returns successful Azure connectivity.
 - `POST /api/storage/upload` returns `success: true` and a valid Azure URL.
 - `profilePicAzure` or `imageAzure` is populated in MongoDB after upload.

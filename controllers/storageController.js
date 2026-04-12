@@ -101,27 +101,36 @@ export const proxyCloudinaryImage = async (req, res) => {
 };
 
 /**
- * Proxy/Bridge for viewing Azure images.
+ * Proxy/Bridge for Azure Blob images.
+ * 
+ * Supports two calling conventions (same as old local express.static):
+ *   NEW: GET /api/storage/images/<userId>/<context>/<file.ext>   ← path param (req.params.blobPath)
+ *   OLD: GET /api/storage/azure/view?blobName=<path>             ← query param (backwards compat)
  */
 export const proxyAzureImage = async (req, res) => {
     try {
-        const { blobName } = req.query; // blobName: "userId/context/filename.ext"
+        // Accept path param (new) or query param (legacy)
+        const blobName = req.params.blobPath || req.query.blobName;
 
         if (!blobName) {
-            return res.status(400).json({ message: "Missing blobName parameter" });
+            return res.status(400).json({ message: "Missing image path" });
         }
 
-        console.log(`🌐 Proxying request for Azure Blob: ${blobName}`);
+        if (!containerClient) {
+            return res.status(503).json({ message: "Azure storage is not configured on this server" });
+        }
 
         const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-        
         const downloadResponse = await blockBlobClient.download(0);
-        
-        res.setHeader('Content-Type', downloadResponse.contentType);
+
+        // Forward content type and cache headers
+        if (downloadResponse.contentType) res.setHeader('Content-Type', downloadResponse.contentType);
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // cache 1 day like a static file
+
         downloadResponse.readableStreamBody.pipe(res);
 
     } catch (error) {
-        console.error("❌ AZURE PROXY ERROR:", error);
-        res.status(500).json({ message: "Error bridging Azure image request" });
+        console.error("❌ AZURE PROXY ERROR:", error.message);
+        res.status(404).json({ message: "Image not found or Azure error", debug: error.message });
     }
 };

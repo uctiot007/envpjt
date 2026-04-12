@@ -32,22 +32,44 @@ export const saveImageLocally = (base64Image, userId, context = 'message') => {
 };
 
 /**
- * Saves image to Triple Storage: Local, Cloudinary, and Azure Blob Storage.
- * Azure is the prioritized cloud provider.
+ * Uploads image directly to Azure Blob Storage.
+ * No local disk save is performed in the default upload flow.
  */
 export const saveImageMulti = async (base64Image, userId, context = 'message') => {
-    // 1. Save Locally
-    const localUrl = saveImageLocally(base64Image, userId, context);
     const results = {
-        localUrl,
+        localUrl: null,
         cloudUrl: null,
         azureUrl: null,
-        success: { local: true, cloud: false, azure: false }
+        success: { local: false, cloud: false, azure: false }
     };
 
-    // 2. Upload to Cloudinary
+    const matches = base64Image.match(/^data:image\/(\w+);base64,(.+)$/);
+    if (!matches) {
+        throw new Error("Invalid image format");
+    }
+
+    const ext = matches[1];
+    const buffer = Buffer.from(matches[2], 'base64');
+    const fileName = `${userId}/${context}/${Date.now()}.${ext}`;
     try {
-        const publicId = path.parse(localUrl).name;
+        if (!containerClient) throw new Error("Azure not configured (AZURE_STORAGE_CONNECTION_STRING missing)");
+        const blockBlobClient = containerClient.getBlockBlobClient(fileName);
+        await blockBlobClient.uploadData(buffer, {
+            blobHTTPHeaders: { blobContentType: `image/${ext}` }
+        });
+        // Store a backend-relative URL — same pattern as the old local express.static serving.
+        // Frontend hits YOUR backend; backend proxies from Azure transparently.
+        results.azureUrl = `/api/storage/images/${fileName}`;
+        results.success.azure = true;
+        console.log(`✅ Azure: Upload successful → ${blockBlobClient.url}`);
+        console.log(`   Stored as backend path: ${results.azureUrl}`);
+    } catch (err) {
+        console.error("⚠️ Azure Blob Storage Upload Failed:", err.message);
+    }
+
+    // Optional backup upload to Cloudinary, but Azure remains the primary target.
+    try {
+        const publicId = path.parse(fileName).name;
         const uploadResponse = await cloudinary.uploader.upload(base64Image, {
             folder: `crackstore/${userId}/${context}`,
             public_id: publicId,
@@ -57,26 +79,6 @@ export const saveImageMulti = async (base64Image, userId, context = 'message') =
         results.success.cloud = true;
     } catch (err) {
         console.error("⚠️ Cloudinary Upload Failed:", err.message);
-    }
-
-    // 3. Upload to Azure Blob Storage
-    try {
-        const matches = base64Image.match(/^data:image\/(\w+);base64,(.+)$/);
-        const ext = matches[1];
-        const buffer = Buffer.from(matches[2], 'base64');
-        const fileName = `${userId}/${context}/${path.parse(localUrl).name}.${ext}`;
-        
-        const blockBlobClient = containerClient.getBlockBlobClient(fileName);
-        
-        await blockBlobClient.uploadData(buffer, {
-            blobHTTPHeaders: { blobContentType: `image/${ext}` }
-        });
-
-        results.azureUrl = blockBlobClient.url;
-        results.success.azure = true;
-        console.log(`✅ Azure: Upload successful! URL: ${results.azureUrl}`);
-    } catch (err) {
-        console.error("⚠️ Azure Blob Storage Upload Failed:", err.message);
     }
 
     return results;

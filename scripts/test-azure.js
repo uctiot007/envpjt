@@ -1,12 +1,18 @@
 import { containerClient } from '../configs/azureStorage.js';
 
 async function testAzureConnection() {
-    console.log("🧪 Testing Azure Blob Storage Connection...");
+    console.log("\n🧪 Testing Azure Blob Storage Connection...");
+
+    if (!containerClient) {
+        console.error("❌ Azure containerClient is null — AZURE_STORAGE_CONNECTION_STRING is missing from .env");
+        return;
+    }
+
     try {
         // 1. Check if container exists
         const exists = await containerClient.exists();
         if (exists) {
-            console.log("✅ Container exists!");
+            console.log("✅ Azure container exists and is reachable!");
         } else {
             console.log("⚠️ Container does not exist. Attempting to create...");
             await containerClient.create();
@@ -14,19 +20,16 @@ async function testAzureConnection() {
         }
 
         // 2. Try listing blobs (even if zero)
-        console.log("📂 Listing blobs in container...");
+        let blobCount = 0;
         for await (const blob of containerClient.listBlobsFlat()) {
-            console.log(` - ${blob.name}`);
+            blobCount++;
         }
-
-        console.log("\n🎉 Azure Connection Verified!");
+        console.log(`📂 Container has ${blobCount} blob(s).`);
+        console.log("🎉 Azure connection verified successfully!\n");
     } catch (err) {
         console.error("❌ Azure Connection Failed:", err.message);
-        if (err.message.includes("AuthenticationFailed")) {
-            console.error("👉 Tip: Check your Client Secret, Client ID, and Tenant ID in .env.");
-        }
     }
-    process.exit(0);
+    // NOTE: No process.exit() here — this runs as a "pre" npm hook and must NOT exit.
 }
 
 testAzureConnection();

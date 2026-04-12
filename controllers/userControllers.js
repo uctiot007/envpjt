@@ -88,13 +88,14 @@ export async function signup(req, res){
         })
 
         const savedUser = await user.save();
-        generateTokenAndSetCookie(res, user._id);
+        const token = generateTokenAndSetCookie(res, user._id);
 
         await sendVerificationEmail(user.email, verificationToken);
 
         res.status(201).json({
             success: true,
             message: "User created successfully",
+            token,
             user: {
                 ...user._doc,
                 password: undefined,
@@ -108,12 +109,13 @@ export async function signup(req, res){
 }
 
 export async function login(req, res){
-    const { usernameOrEmail, password } = req.body;
+    const { usernameOrEmail, email, password } = req.body;
+    const loginField = usernameOrEmail || email;
     try{
         const user = await User.findOne({
             $or: [
-                { email: usernameOrEmail },
-                { username: usernameOrEmail}
+                { email: loginField },
+                { username: loginField }
             ]
         })
         if(!user){
@@ -130,13 +132,14 @@ export async function login(req, res){
             })
         }
 
-        generateTokenAndSetCookie(res, user._id);
+        const token = generateTokenAndSetCookie(res, user._id);
         user.lastLogin = new Date();
         await user.save();
 
         res.status(200).json({
             success: true,
             message: "Logged in successfully",
+            token,
             user: {
                 ...user._doc,
                 password: undefined,

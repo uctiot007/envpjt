@@ -12,7 +12,9 @@
     "dev": "nodemon server.js",
     "sync": "node scripts/sync-db.js",
     "backup": "node scripts/backup.js",
-    "boot": "node scripts/boot-sync.js"
+    "boot": "node scripts/boot-sync.js",
+    "migrate:cloudinary-to-azure": "node scripts/migrate-cloudinary-to-azure.js",
+    "migrate:local-to-azure": "node scripts/migrate-local-to-azure.js"
   },
   "dependencies": {
     "@azure/identity": "^4.13.1",

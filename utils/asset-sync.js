@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import cloudinary from '../configs/cloudinary.js';
+import { uploadToAzure } from '../configs/azureStorage.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -125,24 +126,32 @@ export async function syncAssets() {
         const folderPath = path.join('crackstore', path.dirname(relativePath)).replace(/\\/g, '/');
         const filename = path.basename(filePath);
         const publicId = path.parse(filename).name;
+        const ext = path.extname(filename).slice(1) || 'octet-stream';
+        const contentType = `image/${ext}`;
+        const blobName = relativePath.replace(/\\/g, '/');   // e.g. userId/context/file.ext
 
+        // --- Azure Upload (Primary) ---
         try {
-            const result = await uploadToCloudinary(filePath, folderPath, publicId, relativePath);
+            const fileBuffer = fs.readFileSync(filePath);
+            await uploadToAzure(fileBuffer, blobName, contentType);
             successCount++;
-            if (result.proxied) {
-                // console.log(`   ✅ Proxied via Render: ${relativePath}`);
-            } else if (result.type === 'raw') {
-                console.log(`   ✅ Synced as raw data.`);
-            }
         } catch (err) {
-            console.error(`   ❌ Failed to sync ${relativePath}: ${err.message}`);
+            console.error(`   ❌ Azure failed for ${relativePath}: ${err.message}`);
             failCount++;
+        }
+
+        // --- Cloudinary Upload (Backup) ---
+        try {
+            await uploadDirect(filePath, folderPath, publicId, relativePath);
+        } catch (err) {
+            // Cloudinary backup failure is non-fatal — don't increment failCount
+            console.warn(`   ⚠️ Cloudinary backup failed for ${relativePath}: ${err.message}`);
         }
     }
 
     console.log("\n================ ASSET SYNC SUMMARY ================");
-    console.log(`✅ Successfully synced: ${successCount}`);
+    console.log(`✅ Azure synced: ${successCount}`);
     console.log(`⏩ Skipped/Up-to-date: ${skipCount}`);
-    console.log(`❌ Failed: ${failCount}`);
+    console.log(`❌ Azure failed: ${failCount}`);
     console.log("====================================================");
 }

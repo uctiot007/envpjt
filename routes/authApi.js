@@ -19,7 +19,8 @@ router.post('/forgot-password', forgotPassword);
 
 router.post('/reset-password/:token', resetPassword);
 
-router.put('/update-profile', verifyToken, updateProfileLocal);
+router.put('/update-profile', verifyToken, updateProfile);
+router.put('/updateProfile', verifyToken, updateProfile);
 
 router.get('/user/:id', verifyToken, getUserById);
 
