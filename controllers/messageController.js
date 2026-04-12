@@ -2,7 +2,7 @@ import Message from '../models/message.model.js';
 import User from '../models/User.js'
 import cloudinary from '../configs/cloudinary.js'
 import { getReceiverSocketId, io } from "../lib/socket.js";
-import { saveImageLocally, saveImageDual } from './imageController.js';
+import { saveImageLocally, saveImageMulti, saveImageDual } from './imageController.js';
 
 export const getUsersForSidebar = async (req, res) => {
     try {

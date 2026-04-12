@@ -1,5 +1,4 @@
 import { BlobServiceClient } from "@azure/storage-blob";
-import { ClientSecretCredential } from "@azure/identity";
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -11,24 +10,30 @@ const __dirname = dirname(__filename);
 // Ensure .env is loaded
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const AZURE_TENANT_ID = process.env.AZURE_TENANT_ID;
-const AZURE_CLIENT_ID = process.env.AZURE_CLIENT_ID;
-const AZURE_CLIENT_SECRET = process.env.AZURE_CLIENT_SECRET;
-const AZURE_STORAGE_ENDPOINT = process.env.AZURE_STORAGE_ENDPOINT;
+const AZURE_STORAGE_CONNECTION_STRING = process.env.AZURE_STORAGE_CONNECTION_STRING;
 const AZURE_CONTAINER_NAME = process.env.AZURE_CONTAINER_NAME || 'mystorage123';
 
-// Use Client Secret for authentication
-const credential = new ClientSecretCredential(
-    AZURE_TENANT_ID,
-    AZURE_CLIENT_ID,
-    AZURE_CLIENT_SECRET
-);
+if (!AZURE_STORAGE_CONNECTION_STRING) {
+    console.error("❌ AZURE_STORAGE_CONNECTION_STRING is missing from .env!");
+}
 
-const blobServiceClient = new BlobServiceClient(
-    AZURE_STORAGE_ENDPOINT,
-    credential
-);
-
+// Initialize with Connection String
+const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
 const containerClient = blobServiceClient.getContainerClient(AZURE_CONTAINER_NAME);
 
-export { blobServiceClient, containerClient, AZURE_CONTAINER_NAME };
+/**
+ * Generic Utility to upload a buffer to Azure
+ */
+const uploadToAzure = async (buffer, fileName, contentType) => {
+    if (!(await containerClient.exists())) {
+        await containerClient.createIfNotExists();
+    }
+
+    const blockBlobClient = containerClient.getBlockBlobClient(fileName);
+    await blockBlobClient.uploadData(buffer, {
+        blobHTTPHeaders: { blobContentType: contentType }
+    });
+    return blockBlobClient.url;
+};
+
+export { blobServiceClient, containerClient, AZURE_CONTAINER_NAME, uploadToAzure };

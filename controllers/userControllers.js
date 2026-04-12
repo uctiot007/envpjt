@@ -5,7 +5,7 @@ import { generateTokenAndSetCookie } from '../utils/generateTokenAndSetCookie.js
 import { sendPasswordResetEmail, sendResetSuccessEmail, sendVerificationEmail } from '../mail-service/emails.js';
 import cloudinary from '../configs/cloudinary.js';
 import crypto from "crypto";
-import { saveImageLocally, saveImageDual } from './imageController.js';
+import { saveImageLocally, saveImageMulti, saveImageDual } from './imageController.js';
 import { getReceiverSocketId, io } from "../lib/socket.js";
 
 import fs from 'fs';

@@ -105,10 +105,12 @@ If cloud domains are blocked (common in restricted networks), use the **Proxy Br
 
 The scripts are now simplified. The server handles all maintenance tasks automatically on start.
 
+> Both `npm start` and `npm run dev` now execute Azure connectivity verification first, then start the server.
+
 | Script | Command | Description |
 |---|---|---|
-| **Start (Dev)** | `npm run dev` | Unified command: Boot sync + Start server via Nodemon |
-| **Start (Prod)** | `npm start` | Unified command: Boot sync + Start server |
+| **Start (Dev)** | `npm run dev` | Runs Azure connectivity test, then starts the server with Nodemon |
+| **Start (Prod)** | `npm start` | Runs Azure connectivity test, then starts the server |
 | **Direct Boot** | `npm run boot` | Manually trigger host-sync and asset-mirroring |
 | **DB Sync** | `npm run sync` | Manually trigger bidirectional database sync |
 
@@ -173,6 +175,49 @@ Always ensure your startup sequence doesn't loop. If you modify files on boot, c
 }
 ```
 
+### 4. Azure Blob Storage Integration
+For backend developers who need Azure as the primary image database, wire the Azure helper and route as follows:
+
+1. **Environment variables**
+   - `AZURE_STORAGE_CONNECTION_STRING` — Azure Storage account connection string
+   - `AZURE_CONTAINER_NAME` — blob container name (example: `mystorage123`)
+   - `STORAGE_SERVER_SECRET` — secret used for `/api/storage/upload`
+
+2. **Azure helper setup**
+   - In `configs/azureStorage.js`, the `uploadToAzure()` helper should create the container if missing and upload image buffers.
+   - Export `uploadToAzure` and `containerClient` for controller usage.
+
+3. **Upload endpoint**
+   - `routes/storageApi.js` exposes `POST /api/storage/upload`
+   - `controllers/storageController.js` implements `handleExternalUpload()`
+   - It validates `x-storage-secret`, parses `base64Image`, and uploads to Azure first.
+
+4. **Image controller usage**
+   - Use `saveImageMulti(base64Image, userId, context)` in any controller that saves user or message images.
+   - It returns an object with:
+     - `localUrl`
+     - `cloudUrl`
+     - `azureUrl`
+     - `success` status for each storage provider
+
+5. **Select the correct frontend URL**
+   - Prefer Azure for the public-facing field.
+   - Example in `controllers/userControllers.js`:
+     ```js
+     const primaryUrl = result.azureUrl || result.cloudUrl || result.localUrl;
+     ```
+   - Store secondary values in separate DB fields:
+     - `profilePicLocal`
+     - `profilePicCloud`
+     - `profilePicAzure`
+
+### 5. Verification checklist for backend integration
+- `node .\scripts\test-azure.js` returns successful Azure connectivity.
+- `POST /api/storage/upload` returns `success: true` and a valid Azure URL.
+- `profilePicAzure` or `imageAzure` is populated in MongoDB after upload.
+- `GET /api/storage/azure/view?blobName=...` streams the blob back correctly.
+- `saveImageMulti(...)` is used in controllers rather than direct local-only saves.
+
 ---
 
 ## Installation
@@ -183,7 +228,13 @@ Always ensure your startup sequence doesn't loop. If you modify files on boot, c
    ```
 
 2. **Environment Setup**
-   Ensure `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` are correctly set in `.env`.
+   Ensure the following values are set in `.env`:
+   - `CLOUDINARY_CLOUD_NAME`
+   - `CLOUDINARY_API_KEY`
+   - `CLOUDINARY_API_SECRET`
+   - `AZURE_STORAGE_CONNECTION_STRING`
+   - `AZURE_CONTAINER_NAME`
+   - `STORAGE_SERVER_SECRET`
 
 3. **Run**
    ```bash
